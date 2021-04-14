@@ -1,0 +1,33 @@
+CORRUPTION:
+  MODEL: Standard
+  SEVERITY:
+    - 5
+    - 4
+    - 3
+    - 2
+    - 1
+  TYPE:
+    - gaussian_noise
+    - shot_noise
+    - impulse_noise
+    - defocus_blur
+    - glass_blur
+    - motion_blur
+    - zoom_blur
+    - snow
+    - frost
+    - fog
+    - brightness
+    - contrast
+    - elastic_transform
+    - pixelate
+    - jpeg_compression
+BN:
+  FUNC: TrainModeBatchNorm2d
+OPTIM:
+  BATCH_SIZE: 200
+  METHOD: Adam
+  ITER: 1
+  BETA: 0.9
+  LR: 1e-3
+  WD: 0.
