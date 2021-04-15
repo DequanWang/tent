@@ -1,79 +1,65 @@
+from copy import deepcopy
+
 import torch
-
-from torch import nn
-from torch.nn import BatchNorm2d
-
-from conf import cfg
+import torch.nn as nn
 
 
-def get_norm(out_channels):
+class Norm(nn.Module):
+    """Norm adapts a model by estimating feature statistics during testing.
+
+    Once equipped with Norm, the model normalizes its features during testing
+    with batch-wise statistics, just like batch norm does during training.
     """
-    Args:
-        norm (str or callable): one of the batch normalization types
-        (BatchNorm2d, TrainModeBatchNorm2d, FrozenMeanVarBatchNorm2d).
-    Returns:
-        nn.Module or None: the normalization module.
-    """
-    return globals()[cfg.BN.FUNC](out_channels, cfg.BN.EPS, cfg.BN.MOM)
 
-
-class TrainModeBatchNorm2d(nn.Module):
-    __constants__ = ['eps', 'num_features']
-
-    def __init__(self, num_features, eps=1e-5, momentum=0.1):
+    def __init__(self, model, eps=1e-5, momentum=0.1,
+                 reset_stats=False, no_stats=False):
         super().__init__()
-        self.num_features, self.eps = num_features, eps
-        self.register_parameter("weight",
-                                nn.Parameter(torch.ones(num_features)))
-        self.register_parameter("bias",
-                                nn.Parameter(torch.zeros(num_features)))
-        self.register_buffer("running_mean", torch.zeros(num_features))
-        self.register_buffer("running_var", torch.ones(num_features) - eps)
-
-    def extra_repr(self):
-        return '{num_features}, eps={eps}, affine=True'.format(**self.__dict__)
-
-    def _load_from_state_dict(self, state_dict, prefix, local_metadata, strict,
-                              missing_keys, unexpected_keys, error_msgs):
-        super()._load_from_state_dict(
-            state_dict, prefix, local_metadata, strict,
-            missing_keys, unexpected_keys, error_msgs)
+        self.model = model
+        self.model = configure_model(model, eps, momentum, reset_stats,
+                                     no_stats)
+        self.model_state = deepcopy(self.model.state_dict())
 
     def forward(self, x):
-        current_mean = x.mean([0, 2, 3])
-        current_var = x.var([0, 2, 3], unbiased=False)
-        scale = self.weight * (current_var + self.eps).rsqrt()
-        bias = self.bias - current_mean * scale
-        scale = scale.reshape(1, -1, 1, 1)
-        bias = bias.reshape(1, -1, 1, 1)
-        return x * scale + bias
+        return self.model(x)
+
+    def reset(self):
+        self.model.load_state_dict(self.model_state, strict=True)
 
 
-class FrozenMeanVarBatchNorm2d(nn.Module):
-    __constants__ = ['eps', 'num_features']
+def collect_stats(model):
+    """Collect the normalization stats from batch norms.
 
-    def __init__(self, num_features, eps=1e-5, momentum=0.1):
-        super().__init__()
-        self.num_features, self.eps = num_features, eps
-        self.register_parameter("weight",
-                                nn.Parameter(torch.ones(num_features)))
-        self.register_parameter("bias",
-                                nn.Parameter(torch.zeros(num_features)))
-        self.register_buffer("running_mean", torch.zeros(num_features))
-        self.register_buffer("running_var", torch.ones(num_features) - eps)
+    Walk the model's modules and collect all batch normalization stats.
+    Return the stats and their names.
+    """
+    stats = []
+    names = []
+    for nm, m in model.named_modules():
+        if isinstance(m, nn.BatchNorm2d):
+            state = m.state_dict()
+            if m.affine:
+                del state['weight'], state['bias']
+            for ns, s in state.items():
+                stats.append(s)
+                names.append(f"{nm}.{ns}")
+    return stats, names
 
-    def extra_repr(self):
-        return '{num_features}, eps={eps}, affine=True'.format(**self.__dict__)
 
-    def _load_from_state_dict(self, state_dict, prefix, local_metadata, strict,
-                              missing_keys, unexpected_keys, error_msgs):
-        super()._load_from_state_dict(
-            state_dict, prefix, local_metadata, strict,
-            missing_keys, unexpected_keys, error_msgs)
-
-    def forward(self, x):
-        scale = self.weight * (self.running_var + self.eps).rsqrt()
-        bias = self.bias - self.running_mean * scale
-        scale = scale.reshape(1, -1, 1, 1)
-        bias = bias.reshape(1, -1, 1, 1)
-        return x * scale + bias
+def configure_model(model, eps, momentum, reset_stats, no_stats):
+    """Configure model for adaptation by test-time normalization."""
+    for m in model.modules():
+        if isinstance(m, nn.BatchNorm2d):
+            # use batch-wise statistics in forward
+            m.train()
+            # configure epsilon for stability, and momentum for updates
+            m.eps = eps
+            m.momentum = momentum
+            if reset_stats:
+                # reset state to estimate test stats without train stats
+                m.reset_running_stats()
+            if no_stats:
+                # disable state entirely and use only batch stats
+                m.track_running_stats = False
+                m.running_mean = None
+                m.running_var = None
+    return model

@@ -15,14 +15,33 @@ import numpy as np
 from datetime import datetime
 from iopath.common.file_io import g_pathmgr
 from yacs.config import CfgNode as CfgNode
+
+
 # Global config object (example usage: from core.config import cfg)
 _C = CfgNode()
 cfg = _C
 
 
-# ------------------------------ Corruption options ----------------------------------- #
+# ----------------------------- Model options ------------------------------- #
+_C.MODEL = CfgNode()
+
+# Check https://github.com/RobustBench/robustbench for available models
+_C.MODEL.ARCH = 'Standard'
+
+# Choice of (source, norm, tent)
+# - source: baseline without adaptation
+# - norm: test-time normalization
+# - tent: test-time entropy minimization (ours)
+_C.MODEL.ADAPTATION = 'source'
+
+# By default tent is online, with updates persisting across batches.
+# To make adaptation episodic, and reset the model for each batch, choose True.
+_C.MODEL.EPISODIC = False
+
+# ----------------------------- Corruption options -------------------------- #
 _C.CORRUPTION = CfgNode()
 
+# Dataset for evaluation
 _C.CORRUPTION.DATASET = 'cifar10'
 
 # Check https://github.com/hendrycks/robustness for corruption details
@@ -32,22 +51,11 @@ _C.CORRUPTION.TYPE = ['gaussian_noise', 'shot_noise', 'impulse_noise',
                       'elastic_transform', 'pixelate', 'jpeg_compression']
 _C.CORRUPTION.SEVERITY = [5, 4, 3, 2, 1]
 
-# Check https://github.com/RobustBench/robustbench for available models
-_C.CORRUPTION.MODEL = 'Standard'
-
-# Accumulate the optimizations or not
-_C.CORRUPTION.EVAL_ONLY = False
-_C.CORRUPTION.RESET_STATE = False
-
-
 # Number of examples to evaluate (10000 for all samples in CIFAR-10)
 _C.CORRUPTION.NUM_EX = 10000
 
-# -------------------------------- Batch norm options -------------------------------- #
+# ------------------------------- Batch norm options ------------------------ #
 _C.BN = CfgNode()
-
-# (BatchNorm2d, TrainModeBatchNorm2d, FrozenMeanVarBatchNorm2d)
-_C.BN.FUNC = 'BatchNorm2d'
 
 # BN epsilon
 _C.BN.EPS = 1e-5
@@ -55,20 +63,17 @@ _C.BN.EPS = 1e-5
 # BN momentum (BN momentum in PyTorch = 1 - BN momentum in Caffe2)
 _C.BN.MOM = 0.1
 
-# -------------------------------- Optimizer options --------------------------------- #
+# ------------------------------- Optimizer options ------------------------- #
 _C.OPTIM = CfgNode()
 
-# Choices: Adam, AdaMod
-_C.OPTIM.METHOD = 'Adam'
-
-# Number of iterations
-_C.OPTIM.ITER = 5
-
-# Total mini-batch size
-_C.OPTIM.BATCH_SIZE = 128
+# Number of updates per batch
+_C.OPTIM.STEPS = 1
 
 # Learning rate
 _C.OPTIM.LR = 1e-3
+
+# Choices: Adam, SGD
+_C.OPTIM.METHOD = 'Adam'
 
 # Beta
 _C.OPTIM.BETA = 0.9
@@ -85,21 +90,19 @@ _C.OPTIM.NESTEROV = True
 # L2 regularization
 _C.OPTIM.WD = 0.0
 
+# ------------------------------- Testing options --------------------------- #
+_C.TEST = CfgNode()
 
-# ---------------------------------- CUDNN options ----------------------------------- #
+# Batch size for evaluation (and updates for norm + tent)
+_C.TEST.BATCH_SIZE = 128
+
+# --------------------------------- CUDNN options --------------------------- #
 _C.CUDNN = CfgNode()
 
-# Perform benchmarking to select fastest CUDNN algorithms (best for fixed input sizes)
+# Benchmark to select fastest CUDNN algorithms (best for fixed input sizes)
 _C.CUDNN.BENCHMARK = True
 
-# ---------------------------------- Weights & Biases options ----------------------------------- #
-_C.WANDB = CfgNode()
-_C.WANDB.PROJECT = 'tent'
-_C.WANDB.ENTITY = 'adaptation'
-_C.WANDB.NAME = ''
-_C.WANDB.LOG = True
-
-# ----------------------------------- Misc options ----------------------------------- #
+# ---------------------------------- Misc options --------------------------- #
 
 # Optional description of a config
 _C.DESC = ""
@@ -125,22 +128,15 @@ _C.LOG_TIME = ''
 # # Config destination (in SAVE_DIR)
 # _C.CFG_DEST = "cfg.yaml"
 
-# ---------------------------------- Default config ---------------------------------- #
+# --------------------------------- Default config -------------------------- #
 _CFG_DEFAULT = _C.clone()
 _CFG_DEFAULT.freeze()
 
 
 def assert_and_infer_cfg():
     """Checks config values invariants."""
-    err_str = "The first lr step must start at 0"
-    assert not _C.OPTIM.STEPS or _C.OPTIM.STEPS[0] == 0, err_str
-    data_splits = ["train", "val", "test"]
-    err_str = "Data split '{}' not supported"
-    assert _C.TRAIN.SPLIT in data_splits, err_str.format(_C.TRAIN.SPLIT)
-    assert _C.TEST.SPLIT in data_splits, err_str.format(_C.TEST.SPLIT)
-    err_str = "Mini-batch size should be a multiple of NUM_GPUS."
-    assert _C.TRAIN.BATCH_SIZE % _C.NUM_GPUS == 0, err_str
-    assert _C.TEST.BATCH_SIZE % _C.NUM_GPUS == 0, err_str
+    err_str = "Unknown adaptation method."
+    assert _C.MODEL.ADAPTATION in ["source", "norm", "tent"]
     err_str = "Log destination '{}' not supported"
     assert _C.LOG_DEST in ["stdout", "file"], err_str.format(_C.LOG_DEST)
 
@@ -169,8 +165,8 @@ def reset_cfg():
     cfg.merge_from_other_cfg(_CFG_DEFAULT)
 
 
-def load_cfg_fom_args(cfg_file='conf.yaml', description="Config file options."):
-    """Load config from command line arguments and set any specified options."""
+def load_cfg_fom_args(cfg_file='conf.yaml', description="Config options."):
+    """Load config from command line args and set any specified options."""
     current_time = datetime.now().strftime("%y%m%d_%H%M%S")
     parser = argparse.ArgumentParser(description=description)
     parser.add_argument("--cfg", dest="cfg_file", type=str, default=None,
@@ -194,8 +190,6 @@ def load_cfg_fom_args(cfg_file='conf.yaml', description="Config file options."):
 
     g_pathmgr.mkdirs(cfg.SAVE_DIR)
     cfg.LOG_TIME, cfg.LOG_DEST = current_time, log_dest
-    if cfg.WANDB.NAME == '':
-        cfg.WANDB.NAME = log_dest[:-4]
     cfg.freeze()
 
     logging.basicConfig(
@@ -213,6 +207,8 @@ def load_cfg_fom_args(cfg_file='conf.yaml', description="Config file options."):
     torch.backends.cudnn.benchmark = cfg.CUDNN.BENCHMARK
 
     logger = logging.getLogger(__name__)
-    version = [torch.__version__, torch.version.cuda, torch.backends.cudnn.version()]
-    logger.info("PyTorch Version: torch={}, cuda={}, cudnn={}".format(*version))
+    version = [torch.__version__, torch.version.cuda,
+               torch.backends.cudnn.version()]
+    logger.info(
+        "PyTorch Version: torch={}, cuda={}, cudnn={}".format(*version))
     logger.info(cfg)
