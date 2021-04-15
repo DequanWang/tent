@@ -17,9 +17,8 @@ from conf import cfg, load_cfg_fom_args
 logger = logging.getLogger(__name__)
 
 
-def evaluate(cfg_file):
-    load_cfg_fom_args(cfg_file=cfg_file,
-                      description="CIFAR-10-C evaluation.")
+def evaluate(description):
+    load_cfg_fom_args(description)
     # configure model
     base_model = load_model(cfg.MODEL.ARCH, cfg.CKPT_DIR,
                        cfg.CORRUPTION.DATASET, ThreatModel.corruptions).cuda()
@@ -119,4 +118,4 @@ def setup_optimizer(params):
 
 
 if __name__ == '__main__':
-    evaluate('cifar10c.yaml')
+    evaluate('"CIFAR-10-C evaluation.')

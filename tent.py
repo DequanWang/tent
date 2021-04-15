@@ -25,7 +25,7 @@ class Tent(nn.Module):
 
     def forward(self, x):
         if self.episodic:
-            self.reset(x)
+            self.reset()
 
         for _ in range(self.steps):
             outputs = forward_and_adapt(x, self.model, self.optimizer)

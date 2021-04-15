@@ -165,11 +165,11 @@ def reset_cfg():
     cfg.merge_from_other_cfg(_CFG_DEFAULT)
 
 
-def load_cfg_fom_args(cfg_file='conf.yaml', description="Config options."):
+def load_cfg_fom_args(description="Config options."):
     """Load config from command line args and set any specified options."""
     current_time = datetime.now().strftime("%y%m%d_%H%M%S")
     parser = argparse.ArgumentParser(description=description)
-    parser.add_argument("--cfg", dest="cfg_file", type=str, default=None,
+    parser.add_argument("--cfg", dest="cfg_file", type=str, required=True,
                         help="Config file location")
     parser.add_argument("opts", default=None, nargs=argparse.REMAINDER,
                         help="See conf.py for all options")
@@ -178,15 +178,11 @@ def load_cfg_fom_args(cfg_file='conf.yaml', description="Config options."):
         sys.exit(1)
     args = parser.parse_args()
 
-    if args.cfg_file is None:
-        args.cfg_file = cfg_file
     merge_from_file(args.cfg_file)
     cfg.merge_from_list(args.opts)
-    if args.cfg_file == cfg_file:
-        log_dest = '{}_{}.txt'.format(cfg.CORRUPTION.MODEL, current_time)
-    else:
-        log_dest = os.path.basename(args.cfg_file)
-        log_dest = log_dest.replace('.yaml', '_{}.txt'.format(current_time))
+
+    log_dest = os.path.basename(args.cfg_file)
+    log_dest = log_dest.replace('.yaml', '_{}.txt'.format(current_time))
 
     g_pathmgr.mkdirs(cfg.SAVE_DIR)
     cfg.LOG_TIME, cfg.LOG_DEST = current_time, log_dest

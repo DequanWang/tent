@@ -3,7 +3,7 @@
 This is the official project repository for [Tent: Fully-Test Time Adaptation by Entropy Minimization](https://openreview.net/forum?id=uXl3bZLkr3c) by
 Dequan Wang\*, Evan Shelhamer\*, Shaoteng Liu, Bruno Olshausen, and Trevor Darrell (ICLR 2021, spotlight).
 
-⛺️ Tent equips a model to adapt itself to new and different data during testing ☀️ 🌧❄️.
+⛺️ Tent equips a model to adapt itself to new and different data during testing ☀️ 🌧 ❄️.
 Tented models adapt online and batch-by-batch to reduce error on dataset shifts like corruptions, simulation-to-real discrepancies, and other differences between training and testing data.
 This kind of adaptation is effective and efficient: tent makes just one update per batch to not interrupt inference.
 
@@ -49,7 +49,7 @@ If the tent method or fully test-time adaptation setting are helpful in your res
 ```bibtex
 @inproceedings{wang2021tent,
   title={Tent: Fully Test-Time Adaptation by Entropy Minimization},
-  author={Dequan Wang and Evan Shelhamer and Shaoteng Liu and Bruno Olshausen and Trevor Darrell},
+  author={Wang, Dequan and Shelhamer, Evan and Liu, Shaoteng and Olshausen, Bruno and Darrell, Trevor},
   booktitle={International Conference on Learning Representations},
   year={2021},
   url={https://openreview.net/forum?id=uXl3bZLkr3c}
