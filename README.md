@@ -34,12 +34,12 @@ but feel free to try your own data and model too!
 ```
 import tent
 
-model = TODO_model()  # choose your model
+model = TODO_model()
 
-model = tent.configure_model(model)  # set train mode, configure feature normalization
-params, param_names = tent.collect_params(model)  # collect feature transformation parameters, or choose your own
-optimizer = TODO_optimizer(params, lr=1e-3)  # choose your optimizer
-tented_model = tent.Tent(model, optimizer)  # tent the model
+model = tent.configure_model(model)
+params, param_names = tent.collect_params(model)
+optimizer = TODO_optimizer(params, lr=1e-3)
+tented_model = tent.Tent(model, optimizer)
 
 outputs = tented_model(inputs)  # now it infers and adapts!
 ```
