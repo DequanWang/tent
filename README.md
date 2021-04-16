@@ -10,6 +10,39 @@ This kind of adaptation is effective and efficient: tent makes just one update p
 We provide **example code** in PyTorch to illustrate the tent method and fully test-time adaptation setting.
 Please check back soon for **reference code** to exactly reproduce the ImageNet-C results in the paper.
 
+**Installation**:
+
+```
+pip install -r requirements.txt
+```
+
+tent depends on
+
+- Python 3
+- [PyTorch](https://pytorch.org/) >= 1.0
+
+and the example depends on
+
+- [RobustBench](https://github.com/RobustBench/robustbench) v0.1 for the dataset and pre-trained model
+- [yacs](https://github.com/rbgirshick/yacs) for experiment configuration
+
+but feel free to try your own data and model too!
+
+**Usage**:
+
+```
+import tent
+
+model = TODO_model()  # choose your model
+
+model = tent.configure_model(model)  # set train mode, configure feature normalization
+params, param_names = tent.collect_params(model)  # collect feature transformation parameters, or choose your own
+optimizer = TODO_optimizer(params, lr=1e-3)  # choose your optimizer
+tented_model = tent.Tent(model, optimizer)  # tent the model
+
+outputs = tented_model(inputs)  # now it infers and adapts!
+```
+
 ## Example: Adapting to Image Corruptions on CIFAR-10-C
 
 The example adapts a CIFAR-10 classifier to image corruptions on CIFAR-10-C.
