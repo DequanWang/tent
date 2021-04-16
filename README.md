@@ -7,18 +7,18 @@ Dequan Wang\*, Evan Shelhamer\*, Shaoteng Liu, Bruno Olshausen, and Trevor Darre
 Tented models adapt online and batch-by-batch to reduce error on dataset shifts like corruptions, simulation-to-real discrepancies, and other differences between training and testing data.
 This kind of adaptation is effective and efficient: tent makes just one update per batch to not interrupt inference.
 
-To illustrate the tent method and fully test-time adaptation setting we provide **example code** for adapting to image corruptions on CIFAR-10-C.
-The purpose of the example is explanation, not reproduction: exact details of the model architecture, optimization settings, etc. may differ from the paper.
-That said, the results should be representative, so do give it a try and experiment!
-
+We provide **example code** in PyTorch to illustrate the tent method and fully test-time adaptation setting.
 Please check back soon for **reference code** to exactly reproduce the ImageNet-C results in the paper.
 
 ## Example: Adapting to Image Corruptions on CIFAR-10-C
 
-This example compares a baseline without adaptation (source), test-time normalization for updating feature statistics during testing (norm), and our method for entropy minimization during testing (tent).
+The example adapts a CIFAR-10 classifier to image corruptions on CIFAR-10-C.
+The purpose of the example is explanation, not reproduction: exact details of the model architecture, optimization settings, etc. may differ from the paper.
+That said, the results should be representative, so do give it a try and experiment!
 
-- Dataset: [CIFAR-10-C](https://github.com/hendrycks/robustness/), with 15 corruption types and 5 levels.
-- Model: [WRN-28-10](https://github.com/RobustBench/robustbench), the default model for RobustBench.
+This example compares a baseline without adaptation (source), test-time normalization for updating feature statistics during testing (norm), and our method for entropy minimization during testing (tent).
+The dataset is [CIFAR-10-C](https://github.com/hendrycks/robustness/), with 15 types and 5 levels of corruption.
+The model is [WRN-28-10](https://github.com/RobustBench/robustbench), which is the default model for RobustBench.
 
 **Usage**:
 
