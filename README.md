@@ -7,7 +7,8 @@ Dequan Wang\*, Evan Shelhamer\*, Shaoteng Liu, Bruno Olshausen, and Trevor Darre
 Tented models adapt online and batch-by-batch to reduce error on dataset shifts like corruptions, simulation-to-real discrepancies, and other differences between training and testing data.
 This kind of adaptation is effective and efficient: tent makes just one update per batch to not interrupt inference.
 
-We provide **example code** in PyTorch to illustrate the tent method and fully test-time adaptation setting.
+We provide **[example code](#example-adapting-to-image-corruptions-on-cifar-10-c)** in PyTorch to illustrate the tent method and fully test-time adaptation setting.
+
 Please check back soon for **reference code** to exactly reproduce the ImageNet-C results in the paper.
 
 **Installation**:
