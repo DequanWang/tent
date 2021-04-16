@@ -36,7 +36,7 @@ python cifar10c.py --cfg cfgs/tent.yaml
 | norm   [code](./norm.py)       [config](./cfgs/norm.yaml)         | 20.4 |        28.1 |       26.1 |          36.3 |         12.8 |       35.3 |        14.2 |      12.1 | 17.3 |  17.4 | 15.3 |        8.4 |     12.6 |          23.8 |     19.7 | 27.3 |
 | tent   [code](./tent.py)       [config](./cfgs/tent.yaml)         | 18.6 |        24.8 |       23.5 |          33.0 |         12.0 |       31.8 |        13.7 |      10.8 | 15.9 |  16.2 | 13.7 |        7.9 |     12.1 |          22.0 |     17.3 | 24.2 |
 
-See the full results for this example in the [wandb report](https://wandb.ai/tent/cifar10c).
+See the full results for this example in the [wandb report](https://wandb.ai/tent/cifar10c/reports/Tent-Example-Image-Corruptions--Vmlldzo1NTA0NzM).
 
 ## Correspondence
 
