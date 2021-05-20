@@ -52,7 +52,10 @@ That said, the results should be representative, so do give it a try and experim
 
 This example compares a baseline without adaptation (source), test-time normalization for updating feature statistics during testing (norm), and our method for entropy minimization during testing (tent).
 The dataset is [CIFAR-10-C](https://github.com/hendrycks/robustness/), with 15 types and 5 levels of corruption.
-The model is [WRN-28-10](https://github.com/RobustBench/robustbench), which is the default model for RobustBench.
+
+### WRN-28-10
+
+the default model for [RobustBench](https://github.com/RobustBench/robustbench).
 
 **Usage**:
 
@@ -71,6 +74,29 @@ python cifar10c.py --cfg cfgs/tent.yaml
 | tent   [code](./tent.py)       [config](./cfgs/tent.yaml)         | 18.6 |        24.8 |       23.5 |          33.0 |         12.0 |       31.8 |        13.7 |      10.8 | 15.9 |  16.2 | 13.7 |        7.9 |     12.1 |          22.0 |     17.3 | 24.2 |
 
 See the full results for this example in the [wandb report](https://wandb.ai/tent/cifar10c/reports/Tent-Example-Image-Corruptions--Vmlldzo1NTA0NzM).
+
+### WRN-40-2
+
+WideResNet for [AugMix: A Simple Data Processing Method to Improve Robustness and Uncertainty](https://arxiv.org/abs/1912.02781).
+
+**Usage**:
+
+```python
+python cifar10c.py --cfg cfgs/source.yaml MODEL.ARCH Hendrycks2020AugMix_WRN
+python cifar10c.py --cfg cfgs/norm.yaml MODEL.ARCH Hendrycks2020AugMix_WRN
+python cifar10c.py --cfg cfgs/tent.yaml MODEL.ARCH Hendrycks2020AugMix_WRN
+```
+
+**Result**: tent reduces the error (%) across corruption types at the most severe level of corruption (level 5).
+
+|                                                            | mean | gauss_noise | shot_noise | impulse_noise | defocus_blur | glass_blur | motion_blur | zoom_blur | snow | frost |  fog | brightness | contrast | elastic_trans | pixelate | jpeg |
+|------------|-----:|------------:|-----------:|--------------:|-------------:|-----------:|------------:|----------:|-----:|------:|-----:|-----------:|---------:|--------------:|---------:|-----:|
+| source     | 18.3 |        28.8 |       23.0 |          26.2 |          9.5 |       20.6 |        10.6 |       9.3 | 14.2 |  15.3 | 17.5 |        7.6 |     20.9 |          14.7 |     41.3 | 14.7 |
+| norm       | 14.5 |        18.5 |       16.2 |          22.3 |          9.0 |       21.9 |        10.5 |       9.7 | 12.8 |  13.3 | 15.0 |        7.6 |     11.9 |          16.3 |     15.0 | 17.5 |
+| tent       | 12.1 |        15.7 |       13.2 |          18.8 |          7.9 |       18.1 |         9.0 |       8.0 | 10.4 |  10.8 | 12.4 |        6.7 |     10.0 |          14.0 |     11.4 | 14.8 |
+
+## Example: Adapting to Adversarial Perturbations on CIFAR-10
+See [Fighting Gradients with Gradients: Dynamic Defenses against Adversarial Attacks](https://arxiv.org/abs/2105.08714) for more details on [dent](https://github.com/DequanWang/dent).
 
 ## Correspondence
 
